@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cybersecurity Threat Intelligence Dashboard</title>
+<style>
+:root{--bg:#03030a;--panel:#14142b;--ink:#fff;--mut:#b9bdd6;--teal:#9be3d8;--pink:#e0187f;--vio:#7a2cf0;--blue:#1445ff}
+@media (prefers-color-scheme:light){:root{--bg:#03030a}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:"Segoe UI","Noto Sans","Liberation Sans",Arial,sans-serif;overflow-x:hidden}
+#app{width:1440px;height:780px;position:relative;transform-origin:0 0}
+.top{height:34px;background:#1a1a35;display:flex;align-items:center;justify-content:space-between;padding:0 62px;border-bottom:1px solid #26264a}
+.top b{font-size:13px}.top .br{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.tabs{display:flex;gap:20px;font-size:13px;font-weight:600}.tabs span{cursor:pointer;padding:9px 0;position:relative;color:#e8e8ff}
+.tabs span.on:after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;background:var(--blue)}
+.left{position:absolute;left:54px;top:50px;width:300px}
+.pill{display:inline-block;background:var(--blue);padding:8px 14px;border-radius:20px;font-weight:700;font-size:14px;margin-bottom:22px}
+.desc{font-size:12.5px;font-weight:700;line-height:1.5;width:290px;height:96px}
+.years{display:flex;border:3px solid #fff;margin-top:6px;width:300px;background:#000}.years button{padding:6px 0!important;font-size:12px!important}
+.years button{flex:1;background:none;border:0;color:#fff;font:700 12.5px inherit;font-family:inherit;padding:6px 0;cursor:pointer;border-radius:2px}
+.years button.on{background:#202027;outline:1.5px dotted #fff;outline-offset:-4px}
+.big h2{font-size:29px;margin-top:5px;font-weight:700}.big .n{font-size:58px;font-weight:700;line-height:1.1;margin-top:2px}
+.tg{margin-top:10px;font-size:14px;font-weight:700}.tg span{margin-left:16px}
+#spark{margin-top:6px;display:block}
+.sevh{margin-top:22px;font-size:19px;font-weight:700}
+.sev{margin-top:12px;font-size:12.5px;font-weight:700}.sev div{display:flex;align-items:center;height:34px}.sev i{width:6px;height:6px;border-radius:50%;margin-right:12px}
+.sev .a{width:84px}.sev .p{width:58px}.sev .c{width:70px}
+.stage{position:absolute;left:350px;top:34px;width:960px;height:746px}
+.right{position:absolute;right:6px;top:84px;width:92px;display:flex;flex-direction:column;gap:12px}
+.card{background:#1d1d3d;border-radius:3px;text-align:center;padding:8px 6px;font-size:11px}
+.card .t{font-weight:800;font-size:12.5px}.card .v{font-weight:800;font-size:19px;margin:2px 0}
+.mini{display:flex;align-items:center;font-size:6.5px;height:9.3px;color:#e6e6ff}.mini em{width:20px;text-align:left;font-style:normal}.mini s{display:block;height:5px;border-radius:3px;background:linear-gradient(90deg,#f2a678,#e0187f)}
+svg text{font-family:inherit}
+.tip{position:absolute;z-index:20;background:#101026ee;border:1px solid #5b5bd0;border-radius:6px;padding:8px 11px;font-size:12px;pointer-events:none;display:none;line-height:1.5;max-width:230px}
+.cur{position:fixed;width:18px;height:18px;border:2px solid #fff;background:#ffffff55;border-radius:50%;z-index:99;pointer-events:none;left:-40px;top:-40px;transform:translate(-50%,-50%);transition:left .05s,top .05s}
+.fade{animation:f .5s ease}@keyframes f{from{opacity:.0}to{opacity:1}}
+.hot{cursor:pointer}.hot:hover circle.b{stroke:#fff;stroke-width:2}
+</style></head><body>
+<div id="app">
+ <div class="top"><div class="br"><svg width="26" height="26" viewBox="0 0 26 26"><path d="M13 2 3 6v7c0 6 4.5 9.5 10 11 5.5-1.500 10-5 10-11V6z" fill="none" stroke="#9be3d8" stroke-width="1.800"/><path d="m8.500 13 3.200 3.200L18 10" fill="none" stroke="#9be3d8" stroke-width="2"/></svg><b>Cyber Threat Intelligence</b></div>
+  <div class="tabs" id="tabs"><span class="on" data-t="cat">Threat Categories</span><span data-t="geo">Geographically</span><span data-t="det">Detection Process</span><span data-t="sta">Incident Status</span></div></div>
+ <div class="left">
+  <div class="pill" id="pill">Threat Categories</div>
+  <div class="desc" id="desc"></div>
+  <div class="years" id="years"></div><div id="ynote" style="height:12px;margin-top:3px;font-size:9.5px;color:var(--mut)"></div>
+  <div class="big"><h2>Threat Statistics</h2><div class="n" id="big"></div></div>
+  <div class="tg">Mitigation Target <span id="tgt">90%</span></div>
+  <svg id="spark" width="306" height="92"></svg>
+  <div class="sevh">Incidents by Severity</div>
+  <div class="sev" id="sev"></div>
+ </div>
+ <div class="stage" id="stage"></div>
+ <div class="right">
+  <div class="card"><div style="font-size:17px;font-style:italic">x̄</div><div class="v" id="avg"></div><div class="t" style="font-size:9.5px">Average<br>Monthly Incidents</div></div>
+  <div class="card" style="padding-bottom:10px"><div class="t" style="font-size:9.5px">Mean Time</div><div class="t" style="color:#fff">to Respond</div><div id="mttr" style="margin:6px 0 4px"></div><div class="v" id="mttrv" style="font-size:15px"></div><div style="font-size:8px;color:var(--mut)">hours (avg)</div></div>
+  <div class="card"><div class="t">External</div><div class="v" style="font-size:15px;margin:1px 0" id="ext"></div><svg id="ring" width="64" height="64" viewBox="0 0 64 64" style="margin:3px 0"></svg><div class="v" style="font-size:13px;margin:1px 0" id="int"></div><div class="t">Internal</div></div>
+ </div>
+ <div class="tip" id="tip"></div>
+</div>
+<div class="cur" id="cur"></div>
+<script>
+const D={"data":{"2020":{"total":7200,"mitigated":5759,"rate":80.0,"nm":12,"monthly":[520,533,573,627,588,605,545,578,647,651,604,729],"mttr":[3.29,3.22,3.33,3.0,3.08,3.14,3.17,3.33,3.3,3.14,3.34,3.18],"mttr_all":3.21,"mtt_detect":52.9,"sev":{"Critical":1157,"High":2044,"Medium":2635,"Low":1364},"cats":[{"name":"Phishing","n":2121,"rate":80.7,"subs":[{"name":"Email Phishing","n":1097},{"name":"Spear Phishing","n":500},{"name":"Smishing","n":315},{"name":"Vishing","n":209}],"crit":143,"fin":77.73},{"name":"Malware","n":1700,"rate":79.6,"subs":[{"name":"Trojan","n":581},{"name":"Worm","n":351},{"name":"Spyware","n":406},{"name":"Botnet","n":362}],"crit":232,"fin":109.98},{"name":"Ransomware","n":887,"rate":81.4,"subs":[{"name":"Crypto Ransomware","n":405},{"name":"Locker Ransomware","n":180},{"name":"Double Extortion","n":302}],"crit":412,"fin":344.96},{"name":"DDoS","n":869,"rate":80.3,"subs":[{"name":"Volumetric","n":344},{"name":"Protocol Attack","n":244},{"name":"Application Layer","n":281}],"crit":107,"fin":40.39},{"name":"Insider Threat","n":582,"rate":76.5,"subs":[{"name":"Data Exfiltration","n":225},{"name":"Privilege Misuse","n":141},{"name":"Negligence","n":216}],"crit":124,"fin":75.92},{"name":"Web App Attack","n":1041,"rate":79.6,"subs":[{"name":"SQL Injection","n":327},{"name":"Cross-Site Scripting","n":287},{"name":"Credential Stuffing","n":427}],"crit":139,"fin":71.46}],"countries":[{"name":"China","n":1380},{"name":"Russia","n":1158},{"name":"United States","n":896},{"name":"India","n":559},{"name":"Brazil","n":519},{"name":"Iran","n":514},{"name":"North Korea","n":450},{"name":"Ukraine","n":333},{"name":"Germany","n":294},{"name":"Nigeria","n":361},{"name":"Vietnam","n":303},{"name":"Turkey","n":276}],"industries":[{"name":"Healthcare","n":1152},{"name":"Finance","n":1438},{"name":"Education","n":737},{"name":"Government","n":829},{"name":"E-commerce","n":993},{"name":"Energy","n":475},{"name":"Manufacturing","n":591},{"name":"IT & Telecom","n":927}],"dsrc":[{"name":"SIEM","n":2100},{"name":"EDR","n":1753},{"name":"IDS/IPS","n":1355},{"name":"Threat Intel Feed","n":834},{"name":"User Report","n":730},{"name":"Firewall","n":428}],"origin":{"External":6325,"Internal":875},"funnel":[7200,7003,6488,5759],"status":{"Mitigated":[412,446,477,513,469,486,430,456,490,516,488,576],"Contained":[56,46,49,53,64,61,56,68,80,58,53,85],"Under Investigation":[41,27,33,45,35,39,42,42,57,54,43,57],"Open":[11,14,14,16,20,19,17,12,20,23,20,11]},"sla":65.1,"fin":720.45,"sevstatus":{"Critical":{"Mitigated":895,"Contained":151,"Under Investigation":79,"Open":32},"High":{"Mitigated":1687,"Contained":157,"Under Investigation":150,"Open":50},"Medium":{"Mitigated":2108,"Contained":258,"Under Investigation":201,"Open":68},"Low":{"Mitigated":1069,"Contained":163,"Under Investigation":85,"Open":47}}},"2021":{"total":8400,"mitigated":6833,"rate":81.3,"nm":12,"monthly":[649,623,675,708,693,656,671,641,785,741,752,806],"mttr":[2.94,2.92,3.16,2.94,2.93,2.89,2.95,3.09,2.89,3.01,2.97,2.93],"mttr_all":2.97,"mtt_detect":50.2,"sev":{"Critical":1361,"High":2420,"Medium":3080,"Low":1539},"cats":[{"name":"Phishing","n":2470,"rate":80.5,"subs":[{"name":"Email Phishing","n":1272},{"name":"Spear Phishing","n":618},{"name":"Smishing","n":356},{"name":"Vishing","n":224}],"crit":146,"fin":77.5},{"name":"Malware","n":1914,"rate":81.8,"subs":[{"name":"Trojan","n":660},{"name":"Worm","n":359},{"name":"Spyware","n":516},{"name":"Botnet","n":379}],"crit":257,"fin":126.49},{"name":"Ransomware","n":1235,"rate":82.2,"subs":[{"name":"Crypto Ransomware","n":563},{"name":"Locker Ransomware","n":254},{"name":"Double Extortion","n":418}],"crit":561,"fin":496.19},{"name":"DDoS","n":1018,"rate":80.7,"subs":[{"name":"Volumetric","n":422},{"name":"Protocol Attack","n":232},{"name":"Application Layer","n":364}],"crit":119,"fin":49.86},{"name":"Insider Threat","n":647,"rate":79.4,"subs":[{"name":"Data Exfiltration","n":267},{"name":"Privilege Misuse","n":181},{"name":"Negligence","n":199}],"crit":132,"fin":84.84},{"name":"Web App Attack","n":1116,"rate":83.2,"subs":[{"name":"SQL Injection","n":327},{"name":"Cross-Site Scripting","n":345},{"name":"Credential Stuffing","n":444}],"crit":146,"fin":77.87}],"countries":[{"name":"China","n":1540},{"name":"Russia","n":1381},{"name":"United States","n":1003},{"name":"India","n":699},{"name":"Brazil","n":602},{"name":"Iran","n":673},{"name":"North Korea","n":495},{"name":"Ukraine","n":444},{"name":"Germany","n":311},{"name":"Nigeria","n":429},{"name":"Vietnam","n":338},{"name":"Turkey","n":341}],"industries":[{"name":"Healthcare","n":1341},{"name":"Finance","n":1570},{"name":"Education","n":840},{"name":"Government","n":1001},{"name":"E-commerce","n":1140},{"name":"Energy","n":614},{"name":"Manufacturing","n":755},{"name":"IT & Telecom","n":1058}],"dsrc":[{"name":"SIEM","n":2650},{"name":"EDR","n":1977},{"name":"IDS/IPS","n":1508},{"name":"Threat Intel Feed","n":960},{"name":"User Report","n":807},{"name":"Firewall","n":498}],"origin":{"External":7457,"Internal":943},"funnel":[8400,8164,7610,6833],"status":{"Mitigated":[514,522,573,576,568,539,550,510,630,603,611,637],"Contained":[66,55,53,71,59,60,60,75,70,69,61,78],"Under Investigation":[51,38,34,42,47,43,43,38,52,46,61,59],"Open":[18,8,15,19,19,14,18,18,33,23,19,32]},"sla":69.2,"fin":912.75,"sevstatus":{"Critical":{"Mitigated":1087,"Contained":132,"Under Investigation":99,"Open":43},"High":{"Mitigated":1987,"Contained":211,"Under Investigation":157,"Open":65},"Medium":{"Mitigated":2504,"Contained":285,"Under Investigation":196,"Open":95},"Low":{"Mitigated":1255,"Contained":149,"Under Investigation":102,"Open":33}}},"2022":{"total":10000,"mitigated":8362,"rate":83.6,"nm":12,"monthly":[800,762,791,810,772,798,849,822,869,879,917,931],"mttr":[2.67,2.76,2.65,2.73,2.73,2.78,2.87,2.78,2.82,2.65,2.71,2.81],"mttr_all":2.75,"mtt_detect":47.1,"sev":{"Critical":1804,"High":2874,"Medium":3478,"Low":1844},"cats":[{"name":"Phishing","n":2762,"rate":83.6,"subs":[{"name":"Email Phishing","n":1361},{"name":"Spear Phishing","n":693},{"name":"Smishing","n":431},{"name":"Vishing","n":277}],"crit":177,"fin":89.97},{"name":"Malware","n":2132,"rate":84.3,"subs":[{"name":"Trojan","n":780},{"name":"Worm","n":426},{"name":"Spyware","n":509},{"name":"Botnet","n":417}],"crit":290,"fin":140.32},{"name":"Ransomware","n":1712,"rate":82.5,"subs":[{"name":"Crypto Ransomware","n":800},{"name":"Locker Ransomware","n":349},{"name":"Double Extortion","n":563}],"crit":825,"fin":701.36},{"name":"DDoS","n":1243,"rate":83.9,"subs":[{"name":"Volumetric","n":489},{"name":"Protocol Attack","n":327},{"name":"Application Layer","n":427}],"crit":162,"fin":58.55},{"name":"Insider Threat","n":803,"rate":83.9,"subs":[{"name":"Data Exfiltration","n":293},{"name":"Privilege Misuse","n":203},{"name":"Negligence","n":307}],"crit":161,"fin":105.85},{"name":"Web App Attack","n":1348,"rate":83.5,"subs":[{"name":"SQL Injection","n":397},{"name":"Cross-Site Scripting","n":416},{"name":"Credential Stuffing","n":535}],"crit":189,"fin":96.26}],"countries":[{"name":"China","n":1857},{"name":"Russia","n":1666},{"name":"United States","n":1228},{"name":"India","n":797},{"name":"Brazil","n":742},{"name":"Iran","n":680},{"name":"North Korea","n":587},{"name":"Ukraine","n":511},{"name":"Germany","n":420},{"name":"Nigeria","n":530},{"name":"Vietnam","n":366},{"name":"Turkey","n":402}],"industries":[{"name":"Healthcare","n":1600},{"name":"Finance","n":1826},{"name":"Education","n":934},{"name":"Government","n":1196},{"name":"E-commerce","n":1395},{"name":"Energy","n":694},{"name":"Manufacturing","n":938},{"name":"IT & Telecom","n":1306}],"dsrc":[{"name":"SIEM","n":3039},{"name":"EDR","n":2381},{"name":"IDS/IPS","n":1789},{"name":"Threat Intel Feed","n":1247},{"name":"User Report","n":939},{"name":"Firewall","n":605}],"origin":{"External":8843,"Internal":1157},"funnel":[10000,9744,9217,8362],"status":{"Mitigated":[666,670,676,661,639,665,718,684,745,716,745,777],"Contained":[70,46,59,81,72,68,68,74,67,80,87,83],"Under Investigation":[44,32,38,47,38,47,40,43,38,59,50,51],"Open":[20,14,18,21,23,18,23,21,19,24,35,20]},"sla":73.4,"fin":1192.31,"sevstatus":{"Critical":{"Mitigated":1448,"Contained":187,"Under Investigation":118,"Open":51},"High":{"Mitigated":2433,"Contained":220,"Under Investigation":134,"Open":87},"Medium":{"Mitigated":2908,"Contained":297,"Under Investigation":193,"Open":80},"Low":{"Mitigated":1573,"Contained":151,"Under Investigation":82,"Open":38}}},"2023":{"total":12000,"mitigated":10147,"rate":84.6,"nm":12,"monthly":[947,849,966,917,1054,984,970,1014,1013,1046,1098,1142],"mttr":[2.45,2.42,2.4,2.56,2.42,2.49,2.44,2.56,2.54,2.57,2.52,2.47],"mttr_all":2.49,"mtt_detect":43.2,"sev":{"Critical":2190,"High":3453,"Medium":4210,"Low":2147},"cats":[{"name":"Phishing","n":3380,"rate":84.6,"subs":[{"name":"Email Phishing","n":1704},{"name":"Spear Phishing","n":814},{"name":"Smishing","n":525},{"name":"Vishing","n":337}],"crit":184,"fin":103.1},{"name":"Malware","n":2206,"rate":85.1,"subs":[{"name":"Trojan","n":784},{"name":"Worm","n":444},{"name":"Spyware","n":553},{"name":"Botnet","n":425}],"crit":318,"fin":151.45},{"name":"Ransomware","n":2364,"rate":83.5,"subs":[{"name":"Crypto Ransomware","n":1035},{"name":"Locker Ransomware","n":499},{"name":"Double Extortion","n":830}],"crit":1103,"fin":941.05},{"name":"DDoS","n":1508,"rate":83.6,"subs":[{"name":"Volumetric","n":627},{"name":"Protocol Attack","n":359},{"name":"Application Layer","n":522}],"crit":183,"fin":70.13},{"name":"Insider Threat","n":939,"rate":84.3,"subs":[{"name":"Data Exfiltration","n":361},{"name":"Privilege Misuse","n":236},{"name":"Negligence","n":342}],"crit":182,"fin":112.7},{"name":"Web App Attack","n":1603,"rate":86.3,"subs":[{"name":"SQL Injection","n":476},{"name":"Cross-Site Scripting","n":477},{"name":"Credential Stuffing","n":650}],"crit":220,"fin":120.9}],"countries":[{"name":"China","n":2217},{"name":"Russia","n":1961},{"name":"United States","n":1483},{"name":"India","n":1008},{"name":"Brazil","n":896},{"name":"Iran","n":853},{"name":"North Korea","n":712},{"name":"Ukraine","n":605},{"name":"Germany","n":482},{"name":"Nigeria","n":611},{"name":"Vietnam","n":486},{"name":"Turkey","n":461}],"industries":[{"name":"Healthcare","n":1928},{"name":"Finance","n":2214},{"name":"Education","n":1204},{"name":"Government","n":1437},{"name":"E-commerce","n":1608},{"name":"Energy","n":887},{"name":"Manufacturing","n":1059},{"name":"IT & Telecom","n":1542}],"dsrc":[{"name":"SIEM","n":3553},{"name":"EDR","n":2944},{"name":"IDS/IPS","n":2168},{"name":"Threat Intel Feed","n":1430},{"name":"User Report","n":1206},{"name":"Firewall","n":699}],"origin":{"External":10647,"Internal":1353},"funnel":[12000,11737,11090,10147],"status":{"Mitigated":[810,713,815,774,894,839,815,846,838,887,919,997],"Contained":[72,71,75,73,79,77,71,83,93,86,83,80],"Under Investigation":[48,42,51,55,61,52,62,61,51,51,64,49],"Open":[17,23,25,15,20,16,22,24,31,22,32,16]},"sla":78.5,"fin":1499.34,"sevstatus":{"Critical":{"Mitigated":1823,"Contained":186,"Under Investigation":137,"Open":44},"High":{"Mitigated":2917,"Contained":272,"Under Investigation":196,"Open":68},"Medium":{"Mitigated":3562,"Contained":333,"Under Investigation":216,"Open":99},"Low":{"Mitigated":1845,"Contained":152,"Under Investigation":98,"Open":52}}},"2024":{"total":14000,"mitigated":12138,"rate":86.7,"nm":12,"monthly":[1108,1072,1141,1101,1211,1098,1113,1161,1217,1246,1241,1291],"mttr":[2.28,2.27,2.18,2.17,2.22,2.22,2.24,2.28,2.32,2.37,2.18,2.24],"mttr_all":2.25,"mtt_detect":40.8,"sev":{"Critical":2711,"High":4120,"Medium":4715,"Low":2454},"cats":[{"name":"Phishing","n":3780,"rate":87.0,"subs":[{"name":"Email Phishing","n":1855},{"name":"Spear Phishing","n":932},{"name":"Smishing","n":588},{"name":"Vishing","n":405}],"crit":228,"fin":127.7},{"name":"Malware","n":2290,"rate":87.0,"subs":[{"name":"Trojan","n":784},{"name":"Worm","n":470},{"name":"Spyware","n":575},{"name":"Botnet","n":461}],"crit":282,"fin":143.38},{"name":"Ransomware","n":3101,"rate":86.0,"subs":[{"name":"Crypto Ransomware","n":1382},{"name":"Locker Ransomware","n":619},{"name":"Double Extortion","n":1100}],"crit":1483,"fin":1252.27},{"name":"DDoS","n":1852,"rate":87.8,"subs":[{"name":"Volumetric","n":736},{"name":"Protocol Attack","n":495},{"name":"Application Layer","n":621}],"crit":223,"fin":87.69},{"name":"Insider Threat","n":1178,"rate":85.8,"subs":[{"name":"Data Exfiltration","n":471},{"name":"Privilege Misuse","n":281},{"name":"Negligence","n":426}],"crit":247,"fin":156.67},{"name":"Web App Attack","n":1799,"rate":86.3,"subs":[{"name":"SQL Injection","n":516},{"name":"Cross-Site Scripting","n":566},{"name":"Credential Stuffing","n":717}],"crit":248,"fin":124.42}],"countries":[{"name":"China","n":2575},{"name":"Russia","n":2310},{"name":"United States","n":1762},{"name":"India","n":1142},{"name":"Brazil","n":1027},{"name":"Iran","n":973},{"name":"North Korea","n":872},{"name":"Ukraine","n":714},{"name":"Germany","n":531},{"name":"Nigeria","n":689},{"name":"Vietnam","n":547},{"name":"Turkey","n":597}],"industries":[{"name":"Healthcare","n":2155},{"name":"Finance","n":2714},{"name":"Education","n":1382},{"name":"Government","n":1643},{"name":"E-commerce","n":1974},{"name":"Energy","n":933},{"name":"Manufacturing","n":1275},{"name":"IT & Telecom","n":1778}],"dsrc":[{"name":"SIEM","n":4221},{"name":"EDR","n":3380},{"name":"IDS/IPS","n":2475},{"name":"Threat Intel Feed","n":1665},{"name":"User Report","n":1426},{"name":"Firewall","n":833}],"origin":{"External":12323,"Internal":1677},"funnel":[14000,13685,13054,12138],"status":{"Mitigated":[964,928,982,949,1059,928,962,1007,1036,1080,1085,1158],"Contained":[70,64,78,69,79,69,78,79,91,79,85,75],"Under Investigation":[55,48,53,50,38,77,46,50,61,67,43,43],"Open":[19,32,28,33,35,24,27,25,29,20,28,15]},"sla":82.7,"fin":1892.13,"sevstatus":{"Critical":{"Mitigated":2270,"Contained":200,"Under Investigation":158,"Open":83},"High":{"Mitigated":3611,"Contained":250,"Under Investigation":173,"Open":86},"Medium":{"Mitigated":4123,"Contained":295,"Under Investigation":195,"Open":102},"Low":{"Mitigated":2134,"Contained":171,"Under Investigation":105,"Open":44}}},"2025":{"total":16000,"mitigated":14166,"rate":88.5,"nm":12,"monthly":[1169,1143,1358,1339,1295,1263,1303,1351,1372,1445,1460,1502],"mttr":[1.96,2.02,2.02,1.91,1.9,1.95,1.96,2.03,1.96,1.98,1.97,2.03],"mttr_all":1.98,"mtt_detect":37.1,"sev":{"Critical":3221,"High":4713,"Medium":5362,"Low":2704},"cats":[{"name":"Phishing","n":4168,"rate":88.8,"subs":[{"name":"Email Phishing","n":2074},{"name":"Spear Phishing","n":1022},{"name":"Smishing","n":652},{"name":"Vishing","n":420}],"crit":255,"fin":133.41},{"name":"Malware","n":2490,"rate":88.5,"subs":[{"name":"Trojan","n":880},{"name":"Worm","n":501},{"name":"Spyware","n":610},{"name":"Botnet","n":499}],"crit":350,"fin":167.7},{"name":"Ransomware","n":3964,"rate":88.0,"subs":[{"name":"Crypto Ransomware","n":1794},{"name":"Locker Ransomware","n":814},{"name":"Double Extortion","n":1356}],"crit":1839,"fin":1578.67},{"name":"DDoS","n":2050,"rate":90.1,"subs":[{"name":"Volumetric","n":842},{"name":"Protocol Attack","n":503},{"name":"Application Layer","n":705}],"crit":236,"fin":93.89},{"name":"Insider Threat","n":1304,"rate":87.5,"subs":[{"name":"Data Exfiltration","n":515},{"name":"Privilege Misuse","n":351},{"name":"Negligence","n":438}],"crit":252,"fin":164.98},{"name":"Web App Attack","n":2024,"rate":88.3,"subs":[{"name":"SQL Injection","n":571},{"name":"Cross-Site Scripting","n":636},{"name":"Credential Stuffing","n":817}],"crit":289,"fin":150.58}],"countries":[{"name":"China","n":2941},{"name":"Russia","n":2645},{"name":"United States","n":1980},{"name":"India","n":1322},{"name":"Brazil","n":1188},{"name":"Iran","n":1121},{"name":"North Korea","n":978},{"name":"Ukraine","n":778},{"name":"Germany","n":627},{"name":"Nigeria","n":813},{"name":"Vietnam","n":625},{"name":"Turkey","n":657}],"industries":[{"name":"Healthcare","n":2547},{"name":"Finance","n":3000},{"name":"Education","n":1581},{"name":"Government","n":1940},{"name":"E-commerce","n":2162},{"name":"Energy","n":1063},{"name":"Manufacturing","n":1449},{"name":"IT & Telecom","n":2075}],"dsrc":[{"name":"SIEM","n":4747},{"name":"EDR","n":3874},{"name":"IDS/IPS","n":2878},{"name":"Threat Intel Feed","n":1910},{"name":"User Report","n":1593},{"name":"Firewall","n":998}],"origin":{"External":14092,"Internal":1908},"funnel":[16000,15736,15104,14166],"status":{"Mitigated":[1040,1026,1205,1174,1144,1119,1163,1194,1212,1285,1279,1325],"Contained":[66,59,75,87,80,83,71,83,79,88,79,88],"Under Investigation":[41,44,54,51,55,47,52,46,56,54,68,64],"Open":[22,14,24,27,16,14,17,28,25,18,34,25]},"sla":86.9,"fin":2289.25,"sevstatus":{"Critical":{"Mitigated":2763,"Contained":240,"Under Investigation":164,"Open":54},"High":{"Mitigated":4221,"Contained":254,"Under Investigation":166,"Open":72},"Medium":{"Mitigated":4776,"Contained":297,"Under Investigation":191,"Open":98},"Low":{"Mitigated":2406,"Contained":147,"Under Investigation":111,"Open":40}}},"2026":{"total":12600,"mitigated":11367,"rate":90.2,"nm":9,"monthly":[1263,1324,1401,1339,1496,1361,1399,1420,1597,0,0,0],"mttr":[1.79,1.74,1.75,1.73,1.76,1.76,1.69,1.69,1.75,0,0,0],"mttr_all":1.74,"mtt_detect":33.8,"sev":{"Critical":2603,"High":3815,"Medium":4127,"Low":2055},"cats":[{"name":"Phishing","n":3234,"rate":90.9,"subs":[{"name":"Email Phishing","n":1630},{"name":"Spear Phishing","n":816},{"name":"Smishing","n":469},{"name":"Vishing","n":319}],"crit":175,"fin":104.95},{"name":"Malware","n":1745,"rate":90.1,"subs":[{"name":"Trojan","n":621},{"name":"Worm","n":346},{"name":"Spyware","n":423},{"name":"Botnet","n":355}],"crit":238,"fin":111.26},{"name":"Ransomware","n":3393,"rate":88.7,"subs":[{"name":"Crypto Ransomware","n":1503},{"name":"Locker Ransomware","n":659},{"name":"Double Extortion","n":1231}],"crit":1592,"fin":1390.37},{"name":"DDoS","n":1640,"rate":91.1,"subs":[{"name":"Volumetric","n":669},{"name":"Protocol Attack","n":382},{"name":"Application Layer","n":589}],"crit":186,"fin":73.73},{"name":"Insider Threat","n":1000,"rate":90.5,"subs":[{"name":"Data Exfiltration","n":395},{"name":"Privilege Misuse","n":262},{"name":"Negligence","n":343}],"crit":195,"fin":121.18},{"name":"Web App Attack","n":1588,"rate":90.9,"subs":[{"name":"SQL Injection","n":463},{"name":"Cross-Site Scripting","n":471},{"name":"Credential Stuffing","n":654}],"crit":217,"fin":108.33}],"countries":[{"name":"China","n":2372},{"name":"Russia","n":2041},{"name":"United States","n":1537},{"name":"India","n":1021},{"name":"Brazil","n":878},{"name":"Iran","n":895},{"name":"North Korea","n":775},{"name":"Ukraine","n":667},{"name":"Germany","n":503},{"name":"Nigeria","n":667},{"name":"Vietnam","n":485},{"name":"Turkey","n":508}],"industries":[{"name":"Healthcare","n":1982},{"name":"Finance","n":2386},{"name":"Education","n":1183},{"name":"Government","n":1560},{"name":"E-commerce","n":1805},{"name":"Energy","n":853},{"name":"Manufacturing","n":1130},{"name":"IT & Telecom","n":1577}],"dsrc":[{"name":"SIEM","n":3844},{"name":"EDR","n":3023},{"name":"IDS/IPS","n":2227},{"name":"Threat Intel Feed","n":1532},{"name":"User Report","n":1227},{"name":"Firewall","n":747}],"origin":{"External":11162,"Internal":1438},"funnel":[12600,12421,11979,11367],"status":{"Mitigated":[1143,1183,1264,1222,1359,1226,1245,1289,1436,0,0,0],"Contained":[60,77,72,66,62,67,71,63,74,0,0,0],"Under Investigation":[44,47,47,39,52,48,60,42,63,0,0,0],"Open":[16,17,18,12,23,20,23,26,24,0,0,0]},"sla":91.1,"fin":1909.82,"sevstatus":{"Critical":{"Mitigated":2293,"Contained":168,"Under Investigation":104,"Open":38},"High":{"Mitigated":3432,"Contained":173,"Under Investigation":155,"Open":55},"Medium":{"Mitigated":3770,"Contained":177,"Under Investigation":124,"Open":56},"Low":{"Mitigated":1872,"Contained":94,"Under Investigation":59,"Open":30}}},"All":{"total":80200,"mitigated":68772,"rate":85.8,"nm":12,"monthly":[6456,6306,6905,6841,7109,6765,6850,6987,7500,6008,6072,6401],"mttr":[2.35,2.34,2.34,2.31,2.29,2.33,2.32,2.37,2.37,2.51,2.49,2.51],"mttr_all":2.37,"mtt_detect":42.2,"sev":{"Critical":15047,"High":23439,"Medium":27607,"Low":14107},"cats":[{"name":"Phishing","n":21915,"rate":85.8,"subs":[{"name":"Email Phishing","n":10993},{"name":"Spear Phishing","n":5395},{"name":"Smishing","n":3336},{"name":"Vishing","n":2191}],"crit":1308,"fin":714.36},{"name":"Malware","n":14477,"rate":85.4,"subs":[{"name":"Trojan","n":5090},{"name":"Worm","n":2897},{"name":"Spyware","n":3592},{"name":"Botnet","n":2898}],"crit":1967,"fin":950.59},{"name":"Ransomware","n":16656,"rate":85.8,"subs":[{"name":"Crypto Ransomware","n":7482},{"name":"Locker Ransomware","n":3374},{"name":"Double Extortion","n":5800}],"crit":7815,"fin":6704.87},{"name":"DDoS","n":10180,"rate":86.4,"subs":[{"name":"Volumetric","n":4129},{"name":"Protocol Attack","n":2542},{"name":"Application Layer","n":3509}],"crit":1216,"fin":474.24},{"name":"Insider Threat","n":6453,"rate":85.0,"subs":[{"name":"Data Exfiltration","n":2527},{"name":"Privilege Misuse","n":1655},{"name":"Negligence","n":2271}],"crit":1293,"fin":822.16},{"name":"Web App Attack","n":10519,"rate":86.0,"subs":[{"name":"SQL Injection","n":3077},{"name":"Cross-Site Scripting","n":3198},{"name":"Credential Stuffing","n":4244}],"crit":1448,"fin":749.83}],"countries":[{"name":"China","n":14882},{"name":"Russia","n":13162},{"name":"United States","n":9889},{"name":"India","n":6548},{"name":"Brazil","n":5852},{"name":"Iran","n":5709},{"name":"North Korea","n":4869},{"name":"Ukraine","n":4052},{"name":"Germany","n":3168},{"name":"Nigeria","n":4100},{"name":"Vietnam","n":3150},{"name":"Turkey","n":3242}],"industries":[{"name":"Healthcare","n":12705},{"name":"Finance","n":15148},{"name":"Education","n":7861},{"name":"Government","n":9606},{"name":"E-commerce","n":11077},{"name":"Energy","n":5519},{"name":"Manufacturing","n":7197},{"name":"IT & Telecom","n":10263}],"dsrc":[{"name":"SIEM","n":24154},{"name":"EDR","n":19332},{"name":"IDS/IPS","n":14400},{"name":"Threat Intel Feed","n":9578},{"name":"User Report","n":7928},{"name":"Firewall","n":4808}],"origin":{"External":70849,"Internal":9351},"funnel":[80200,78490,74542,68772],"status":{"Mitigated":[5549,5488,5992,5869,6132,5802,5883,5986,6387,5087,5127,5470],"Contained":[460,418,461,500,495,485,475,525,554,460,448,489],"Under Investigation":[324,278,310,329,326,353,345,322,378,331,329,323],"Open":[123,122,142,143,156,125,147,154,181,130,168,119]},"sla":80.1,"fin":10416.05,"sevstatus":{"Critical":{"Mitigated":12579,"Contained":1264,"Under Investigation":859,"Open":345},"High":{"Mitigated":20288,"Contained":1537,"Under Investigation":1131,"Open":483},"Medium":{"Mitigated":23751,"Contained":1942,"Under Investigation":1316,"Open":598},"Low":{"Mitigated":12154,"Contained":1027,"Under Investigation":642,"Open":284}}}},"meta":{"months":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"target":90,"partial":{"2026":"Jan-Sep 2026 (year to date)"},"countries_geo":{"China":[35,105],"Russia":[60,100],"United States":[38,-97],"India":[21,78],"Brazil":[-10,-52],"Iran":[32,53],"North Korea":[40,127],"Ukraine":[49,32],"Germany":[51,10],"Nigeria":[9,8],"Vietnam":[16,108],"Turkey":[39,35]}}};const DATA=D.data,META=D.meta;
+const COL={Mitigated:"#38d9a9",Contained:"#4c6ef5",["Under Investigation"]:"#f59f00",Open:"#e0187f"};
+const SEVC={Critical:"#e0187f",High:"#ff7a45",Medium:"#a66bff",Low:"#5c7cfa"};
+const DESC={cat:"Total security incidents detected and their breakdowns showing attack categories, sub-types, mitigation rates and highlights for the most prevalent threats and response performance.",
+ geo:"Where attacks originate. Bubble size shows incident volume by source country, with the top attacker nations ranked by share of all detected incidents.",
+ det:"How incidents move through the pipeline: detected, triaged, contained and mitigated, plus which detection tools find the most threats and how fast.",
+ sta:"Current state of every incident by month and by severity: mitigated, contained, under investigation or still open and awaiting action."};
+const NAMES={cat:"Threat Categories",geo:"Geographically",det:"Detection Process",sta:"Incident Status"};
+let Y="2021",T="cat",HL=null;
+const $=s=>document.getElementById(s),NS="http://www.w3.org/2000/svg";
+const fmt=n=>n.toLocaleString("en-US");
+const tip=$("tip");
+function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const r=$("app").getBoundingClientRect(),k=r.width/1440;tip.style.left=((e.clientX-r.left)/k+14)+"px";tip.style.top=((e.clientY-r.top)/k+14)+"px"}
+function hideTip(){tip.style.display="none"}
+function el(tag,at,txt,par){const e=document.createElementNS(NS,tag);for(const k in at)e.setAttribute(k,at[k]);if(txt!=null)e.textContent=txt;if(par)par.appendChild(e);return e}
+function defs(svg){svg.insertAdjacentHTML("beforeend",`<defs>
+<radialGradient id="gv" cx="30%" cy="25%" r="85%"><stop offset="0" stop-color="#7b21d6"/><stop offset="1" stop-color="#1a1696"/></radialGradient>
+<radialGradient id="gp" cx="30%" cy="25%" r="85%"><stop offset="0" stop-color="#e01b8a"/><stop offset="1" stop-color="#c2185b"/></radialGradient>
+<linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e92bff"/><stop offset="1" stop-color="#8b4dff"/></linearGradient>
+<linearGradient id="gb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4c1fc9"/><stop offset="1" stop-color="#e0187f"/></linearGradient>
+<filter id="gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`)}
+function arc(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];const[x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0} ${y0}A${r} ${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1} ${y1}`}
+
+/* ---------- side panels ---------- */
+function side(){const d=DATA[Y];
+ $("big").textContent=fmt(d.total);$("tgt").textContent=META.target+"%";
+ $("avg").textContent=fmt(Math.round(d.total/d.nm));
+ // sparkline
+ const s=$("spark");s.innerHTML="";defs(s);const W=296,H=62,act=d.monthly.slice(0,d.nm),mx=Math.max(...act)*1.12,mn=Math.min(...act)*.55;
+ const pts=act.map((v,i)=>[6+i*(W-12)/11,H-(v-mn)/(mx-mn)*(H-6)]);
+ s.insertAdjacentHTML("beforeend",`<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#1445ff"/><stop offset="1" stop-color="#1445ff00"/></linearGradient></defs>`);
+ el("path",{d:"M"+pts.map(p=>p.join(" ")).join("L")+`L${pts[pts.length-1][0]} ${H}L${pts[0][0]} ${H}Z`,fill:"url(#sg)"},null,s);
+ el("path",{d:"M"+pts.map(p=>p.join(" ")).join("L"),fill:"none",stroke:"#2f6bff","stroke-width":1.5},null,s);
+ META.months.forEach((m,i)=>{const px=6+i*(W-12)/11;const t=el("text",{x:px+2,y:H+10,"font-size":9.5,"font-weight":700,fill:i<pts.length?"#fff":"#6b7099",transform:`rotate(35 ${px} ${H+10})`},m,s)});
+ // severity list
+ $("sev").innerHTML=["Critical","High","Medium","Low"].map(k=>`<div><i style="background:${SEVC[k]}"></i><span class="a">${k}</span><span class="p">${(d.sev[k]/d.total*100).toFixed(0)}%</span><span class="c">${fmt(d.sev[k])}</span></div>`).join("");
+ // mttr mini bars
+ const mm=Math.max(...d.mttr);$("mttr").innerHTML=[...META.months].reverse().map((m,i)=>{const v=d.mttr[11-i];return `<div class="mini"><em>${m}</em><s style="width:${v?Math.max(6,v/mm*58):0}px"></s></div>`}).join("");
+ $("mttrv").textContent=d.mttr_all.toFixed(2);
+ // ring
+ const r=$("ring");r.innerHTML="";const pe=d.origin.External/d.total;
+ el("circle",{cx:32,cy:32,r:26,fill:"none",stroke:"#0b1a52","stroke-width":6},null,r);
+ el("path",{d:arc(32,32,26,-Math.PI/2,-Math.PI/2+Math.PI*2*pe-.01),fill:"none",stroke:"#2f6bff","stroke-width":6,"stroke-linecap":"round"},null,r);
+ el("path",{d:arc(32,32,19,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-pe)),fill:"none",stroke:"#9be3d8","stroke-width":3,opacity:.8},null,r);
+ $("ext").innerHTML=`${fmt(d.origin.External)}<div style="font-size:9.5px;color:var(--mut)">${(pe*100).toFixed(2)}%</div>`;
+ $("int").innerHTML=`<span style="font-size:9.5px;color:var(--mut);display:block">${((1-pe)*100).toFixed(2)}%</span>${fmt(d.origin.Internal)}`;
+ $("ynote").textContent=META.partial[Y]?"* "+META.partial[Y]:"";$("desc").textContent=DESC[T];$("pill").textContent=NAMES[T];
+ document.querySelectorAll("#years button").forEach(b=>b.classList.toggle("on",b.dataset.y===Y));
+ document.querySelectorAll("#tabs span").forEach(b=>b.classList.toggle("on",b.dataset.t===T));
+}
+
+/* ---------- tab 1 : radial ---------- */
+function radial(svg,d){
+ const cx=480,cy=330,max=Math.max(...d.cats.map(c=>c.n)),rate=d.rate;
+ const lay=[ // angle(deg) from centre, bubble orbit multiplier, hub angle offset, child span centre
+  {a:-20,o:1,ha:-48},{a:215,o:1,ha:243},{a:262,o:1.05,ha:290},{a:20,o:1,ha:55},{a:152,o:1,ha:128},{a:98,o:1.05,ha:70}];
+ const order=["Phishing","Malware","Ransomware","DDoS","Insider Threat","Web App Attack"];
+ // orbits
+ [95,175,250,330].forEach((r,i)=>el("ellipse",{cx,cy,rx:r*1.12,ry:r*.8,fill:"none",stroke:"#2a3070","stroke-width":1,opacity:.55-.1*i},null,svg));
+ const top=[...d.cats].sort((a,b)=>b.n-a.n)[0].name;
+ const nodes=order.map((nm,i)=>{const c=d.cats.find(x=>x.name===nm),L=lay[i],rad=L.a*Math.PI/180;
+  const bx=cx+Math.cos(rad)*265*L.o,by=cy+Math.sin(rad)*185*L.o,br=24+Math.sqrt(c.n/max)*46;return{c,L,bx,by,br,rad}});
+ // spokes first
+ nodes.forEach(n=>{el("line",{x1:cx+Math.cos(n.rad)*88,y1:cy+Math.sin(n.rad)*88,x2:n.bx,y2:n.by,stroke:n.c.name===top?"#d84bff":"#6a5cff","stroke-width":1.6,opacity:.9},null,svg)});
+ // centre ring
+ const g=el("g",{},null,svg);
+ for(let i=0;i<72;i++){const a=i*Math.PI/36,r1=96,r2=i%3?101:108;el("line",{x1:cx+Math.cos(a)*r1,y1:cy+Math.sin(a)*r1,x2:cx+Math.cos(a)*r2,y2:cy+Math.sin(a)*r2,stroke:"#b04dff","stroke-width":1.2,opacity:.8},null,g)}
+ el("circle",{cx,cy,r:90,fill:"#1a0b3a",stroke:"#3a2a78","stroke-width":1},null,g);
+ el("path",{d:arc(cx,cy,102,-Math.PI*.95,-Math.PI*.15),fill:"none",stroke:"#6f8c88","stroke-width":1.5},null,g);
+ el("circle",{cx,cy,r:70,fill:"none",stroke:"#2c1855","stroke-width":16},null,g);
+ el("path",{d:arc(cx,cy,70,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(.9999,rate/100)),fill:"none",stroke:"url(#gr)","stroke-width":16,filter:"url(#gl)"},null,g);
+ el("circle",{cx,cy,r:58,fill:"#000"},null,g);
+ el("text",{x:cx,y:cy+3,"text-anchor":"middle","font-size":34,fill:"#fff","font-weight":300},Math.round(rate)+"%",g);
+ el("text",{x:cx,y:cy+24,"text-anchor":"middle","font-size":11,fill:"#fff","font-weight":700},"Threats Mitigated",g);
+ // bubbles + hubs
+ nodes.forEach(n=>{const c=n.c,hot=c.name===top,grp=el("g",{class:"hot"},null,svg);
+  const hd=n.br+74,hx=n.bx+Math.cos(n.L.ha*Math.PI/180)*hd*.95,hy=n.by+Math.sin(n.L.ha*Math.PI/180)*hd*.8;
+  const hx2=Math.max(175,Math.min(810,hx)),hy2=Math.max(54,Math.min(692,hy));
+  el("line",{x1:n.bx,y1:n.by,x2:hx2,y2:hy2,stroke:"#6a5cff","stroke-width":1.5},null,grp);
+  // hub
+  const share=Math.round(c.n/d.total*100);
+  const kids=c.subs.slice(0,c.subs.length),k=kids.length,spread=k>3?Math.PI*1.15:Math.PI*.95,base=Math.atan2(hy2-n.by,hx2-n.bx);
+  kids.forEach((s,j)=>{const ang=base-spread/2+spread*(k===1?.5:j/(k-1)),kr=78,kx=hx2+Math.cos(ang)*kr,ky=hy2+Math.sin(ang)*kr*.95;
+    const kxc=Math.max(Math.cos(ang)<-0.35?135:72,Math.min(880,kx)),kyc=Math.max(26,Math.min(716,ky));
+    el("line",{x1:hx2,y1:hy2,x2:kxc,y2:kyc,stroke:"#9be3d8","stroke-width":1.6,opacity:.8},null,grp);
+    el("circle",{cx:kxc,cy:kyc,r:17,fill:"#232a38"},null,grp);
+    el("text",{x:kxc,y:kyc+4,"text-anchor":"middle","font-size":11,fill:"#fff","font-weight":600},Math.round(s.n/c.n*100)+"%",grp);
+    const right=Math.cos(ang)>=0,ox=right?22:-22;
+    const words=s.name.split(" ");const l1=words.length>1?words.slice(0,-1).join(" "):s.name,l2=words.length>1?words.slice(-1)[0]:"";
+    const tt=el("text",{x:kxc+(Math.abs(Math.cos(ang))<.35?0:ox),y:kyc+(Math.abs(Math.cos(ang))<.35?(Math.sin(ang)<0?-30:34):-3),"text-anchor":Math.abs(Math.cos(ang))<.35?"middle":right?"start":"end","font-size":10.5,fill:"#e8e8ff"},null,grp);
+    el("tspan",{x:tt.getAttribute("x")},l1+(l2?" "+l2:""),tt);
+    el("text",{x:tt.getAttribute("x"),y:+tt.getAttribute("y")+14,"text-anchor":tt.getAttribute("text-anchor"),"font-size":10.5,fill:"#fff"},fmt(s.n),grp);
+  });
+  el("circle",{cx:hx2,cy:hy2,r:19,fill:"#071013",stroke:"#9be3d8","stroke-width":2.5},null,grp);
+  el("text",{x:hx2,y:hy2+4,"text-anchor":"middle","font-size":11.5,fill:"#fff","font-weight":700},share+"%",grp);
+  // bubble
+  el("circle",{class:"b",cx:n.bx,cy:n.by,r:n.br,fill:hot?"url(#gp)":"url(#gv)",filter:"url(#gl)",stroke:hot?"#ff6fb5":"#5a49d6","stroke-width":1},null,grp);
+  el("text",{x:n.bx,y:n.by-3,"text-anchor":"middle","font-size":hot?15:12.5,fill:"#fff","font-weight":hot?800:500},fmt(c.n),grp);
+  el("text",{x:n.bx,y:n.by+16,"text-anchor":"middle","font-size":13,fill:"#fff","font-weight":800},c.name,grp);
+  grp.addEventListener("mousemove",e=>showTip(e,`<b>${c.name}</b><br>Incidents: ${fmt(c.n)} (${share}%)<br>Mitigation rate: ${c.rate}%<br>Critical: ${c.crit}<br>Est. impact: $${c.fin}M`));grp.addEventListener("mouseleave",hideTip);
+ });
+}
+
+/* ---------- tab 2 : geographic ---------- */
+function geo(svg,d){
+ const X0=60,Y0=60,W=640,H=640,px=lon=>X0+(lon+180)/360*W,py=lat=>Y0+(85-lat)/150*(H-70);
+ el("text",{x:X0,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Attack origin by source country",svg);
+ for(let lon=-180;lon<=180;lon+=30){el("line",{x1:px(lon),y1:Y0-6,x2:px(lon),y2:Y0+H-60,stroke:"#232866","stroke-width":1,opacity:.7},null,svg);el("text",{x:px(lon),y:Y0+H-46,"text-anchor":"middle","font-size":9,fill:"#7f86c9"},lon+"°",svg)}
+ for(let lat=-40;lat<=80;lat+=20){el("line",{x1:X0,y1:py(lat),x2:X0+W,y2:py(lat),stroke:"#232866","stroke-width":1,opacity:.7},null,svg);el("text",{x:X0-6,y:py(lat)+3,"text-anchor":"end","font-size":9,fill:"#7f86c9"},lat+"°",svg)}
+ const mx=Math.max(...d.countries.map(c=>c.n)),topc=[...d.countries].sort((a,b)=>b.n-a.n);
+ const P=topc.map(c=>{const [la,lo]=META.countries_geo[c.name];return{c,r:10+Math.sqrt(c.n/mx)*30,ox:px(lo),oy:py(la),x:px(lo),y:py(la)}});
+ for(let it=0;it<400;it++){P.forEach(a=>{a.x+=(a.ox-a.x)*.01;a.y+=(a.oy-a.y)*.01});
+  for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const a=P[i],b=P[j];let dx=b.x-a.x,dy=b.y-a.y,dd=Math.hypot(dx,dy)||1,min=a.r+b.r+16;if(dd<min){const f=(min-dd)/2;dx/=dd;dy/=dd;a.x-=dx*f;a.y-=dy*f;b.x+=dx*f;b.y+=dy*f}}}
+ P.forEach((p,i)=>{const c=p.c,r=p.r,x=Math.max(X0+r,Math.min(X0+W-r,p.x)),y=Math.max(Y0+r,Math.min(Y0+H-60-r,p.y)),hot=i<3;
+  if(Math.hypot(x-p.ox,y-p.oy)>14)el("line",{x1:p.ox,y1:p.oy,x2:x,y2:y,stroke:"#8f8fe0","stroke-width":1,"stroke-dasharray":"3 3",opacity:.6},null,svg);
+  el("circle",{cx:p.ox,cy:p.oy,r:2.5,fill:"#9be3d8"},null,svg);
+  const g=el("g",{class:"hot"},null,svg);
+  el("circle",{class:"b",cx:x,cy:y,r,fill:hot?"url(#gp)":"url(#gv)",opacity:.92,filter:"url(#gl)",stroke:hot?"#ff6fb5":"#5a49d6"},null,g);
+  el("text",{x,y:y+4,"text-anchor":"middle","font-size":r>26?13:10.5,"font-weight":700,fill:"#fff"},fmt(c.n),g);
+  el("text",{x,y:y+r+13,"text-anchor":"middle","font-size":10.5,fill:"#e8e8ff"},c.name,g);
+  g.addEventListener("mousemove",e=>showTip(e,`<b>${c.name}</b><br>${fmt(c.n)} incidents<br>${(c.n/d.total*100).toFixed(1)}% of total<br><span style="color:#9be3d8">dot = country centroid</span>`));g.addEventListener("mouseleave",hideTip)});
+ // ranking
+ const bx=712,mxn=topc[0].n;
+ el("text",{x:bx,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Top source countries",svg);
+ topc.slice(0,10).forEach((c,i)=>{const y=74+i*40;
+  el("text",{x:bx,y:y+9,"font-size":11.5,fill:"#e8e8ff"},c.name,svg);
+  el("rect",{x:bx+92,y:y,width:100,height:9,rx:4.5,fill:"#1c2150"},null,svg);
+  el("rect",{x:bx+92,y:y,width:Math.max(4,c.n/mxn*100),height:9,rx:4.5,fill:i<3?"url(#gb)":"#5a49d6"},null,svg);
+  el("text",{x:bx+200,y:y+9,"font-size":11,fill:"#fff","font-weight":700},fmt(c.n),svg)});
+ el("text",{x:bx,y:520,"font-size":15,"font-weight":800,fill:"#fff"},"Targeted industries",svg);
+ const inds=[...d.industries].sort((a,b)=>b.n-a.n).slice(0,5),im=inds[0].n;
+ inds.forEach((c,i)=>{const y=548+i*30;
+  el("text",{x:bx,y:y+9,"font-size":11.5,fill:"#e8e8ff"},c.name,svg);
+  el("rect",{x:bx+92,y:y,width:100,height:9,rx:4.5,fill:"#1c2150"},null,svg);
+  el("rect",{x:bx+92,y:y,width:Math.max(4,c.n/im*100),height:9,rx:4.5,fill:"#2f9e8f"},null,svg);
+  el("text",{x:bx+200,y:y+9,"font-size":11,fill:"#fff","font-weight":700},fmt(c.n),svg)});
+}
+
+/* ---------- tab 3 : detection ---------- */
+function det(svg,d){
+ el("text",{x:40,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Incident response funnel",svg);
+ const labs=["Detected","Triaged","Contained","Mitigated"],cols=["#6a3df0","#8a35e0","#b629c8","#e0187f"],m=d.funnel[0];
+ d.funnel.forEach((v,i)=>{const y=62+i*118,w=Math.max(120,v/m*520),x=40+(520-w)/2;
+  const g=el("g",{class:"hot"},null,svg);
+  el("rect",{x,y,width:w,height:92,rx:6,fill:cols[i],opacity:.92,filter:"url(#gl)"},null,g);
+  el("text",{x:x+w/2,y:y+40,"text-anchor":"middle","font-size":28,"font-weight":800,fill:"#fff"},fmt(v),g);
+  el("text",{x:x+w/2,y:y+66,"text-anchor":"middle","font-size":13.5,"font-weight":600,fill:"#fff"},labs[i]+"  ·  "+(v/m*100).toFixed(1)+"%",g);
+  g.addEventListener("mousemove",e=>showTip(e,`<b>${labs[i]}</b><br>${fmt(v)} incidents<br>${(v/m*100).toFixed(1)}% of detected`));g.addEventListener("mouseleave",hideTip)});
+ // kpis
+ [["Avg detection time",d.mtt_detect.toFixed(0)+" min"],["Avg response time",d.mttr_all.toFixed(2)+" hrs"],["SLA met",d.sla+"%"]].forEach((k,i)=>{
+  const x=40+i*180;el("rect",{x,y:552,width:164,height:78,rx:6,fill:"#1d1d3d"},null,svg);
+  el("text",{x:x+82,y:585,"text-anchor":"middle","font-size":22,"font-weight":800,fill:"#fff"},k[1],svg);
+  el("text",{x:x+82,y:612,"text-anchor":"middle","font-size":11.5,fill:"#b9bdd6"},k[0],svg)});
+ // detection sources donut-ish bars
+ el("text",{x:620,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Detected by (tool / source)",svg);
+ const ds=[...d.dsrc].sort((a,b)=>b.n-a.n),dm=ds[0].n,cx=770,cy=210;
+ ds.forEach((s,i)=>{const y=62+i*66;
+  el("text",{x:620,y:y+14,"font-size":12.5,fill:"#e8e8ff"},s.name,svg);
+  el("text",{x:880,y:y+14,"text-anchor":"end","font-size":12.5,"font-weight":800,fill:"#fff"},fmt(s.n)+"  ("+(s.n/d.total*100).toFixed(0)+"%)",svg);
+  el("rect",{x:620,y:y+22,width:260,height:10,rx:5,fill:"#1c2150"},null,svg);
+  const r=el("rect",{x:620,y:y+22,width:Math.max(6,s.n/dm*260),height:10,rx:5,fill:i===0?"url(#gb)":"#5a49d6"},null,svg)});
+ el("text",{x:620,y:520,"font-size":15,"font-weight":800,fill:"#fff"},"Top threat categories",svg);
+ [...d.cats].sort((a,b)=>b.n-a.n).slice(0,3).forEach((c,i)=>{const x=620+i*88;
+  el("circle",{cx:x+38,cy:586,r:36-i*3,fill:i===0?"url(#gp)":"url(#gv)",filter:"url(#gl)"},null,svg);
+  el("text",{x:x+38,y:590,"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#fff"},fmt(c.n),svg);
+  el("text",{x:x+38,y:640,"text-anchor":"middle","font-size":10.5,fill:"#e8e8ff"},c.name,svg)});
+}
+
+/* ---------- tab 4 : status ---------- */
+function sta(svg,d){
+ el("text",{x:40,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Incident status by month",svg);
+ const keys=["Mitigated","Contained","Under Investigation","Open"],x0=60,y0=70,W=540,H=470,tot=d.monthly,mx=Math.ceil(Math.max(...tot)*1.05/20)*20;
+ [0,.25,.5,.75,1].forEach(f=>{const y=y0+H-f*H;el("line",{x1:x0,y1:y,x2:x0+W,y2:y,stroke:"#232866"},null,svg);el("text",{x:x0-8,y:y+3,"text-anchor":"end","font-size":9.5,fill:"#7f86c9"},Math.round(f*mx),svg)});
+ const bw=W/12*.62;
+ META.months.forEach((m,i)=>{let acc=0;const x=x0+i*W/12+W/12*.19;
+  keys.forEach(k=>{const v=d.status[k][i],h=v/mx*H,y=y0+H-acc-h;acc+=h;
+   const r=el("rect",{x,y,width:bw,height:Math.max(0,h),fill:COL[k],opacity:.92,class:"hot"},null,svg);
+   r.addEventListener("mousemove",e=>showTip(e,`<b>${m} · ${k}</b><br>${v} incidents`));r.addEventListener("mouseleave",hideTip)});
+  el("text",{x:x+bw/2,y:y0+H+16,"text-anchor":"middle","font-size":10.5,fill:"#e8e8ff"},m,svg)});
+ keys.forEach((k,i)=>{const x=60+i*135;el("rect",{x,y:y0+H+38,width:11,height:11,rx:2,fill:COL[k]},null,svg);el("text",{x:x+17,y:y0+H+48,"font-size":11,fill:"#e8e8ff"},k,svg)});
+ // heat grid
+ el("text",{x:640,y:36,"font-size":15,"font-weight":800,fill:"#fff"},"Severity × status",svg);
+ const sv=["Critical","High","Medium","Low"],gx=640,gy=110,cw=56,ch=60;
+ keys.forEach((k,j)=>el("text",{x:gx+80+j*cw+cw/2-2,y:gy-14,"text-anchor":"middle","font-size":9.5,fill:"#b9bdd6"},k==="Under Investigation"?"Investig.":k,svg));
+ const gm=Math.max(...sv.flatMap(s=>keys.map(k=>d.sevstatus[s][k])));
+ sv.forEach((s,i)=>{el("text",{x:gx,y:gy+i*ch+ch/2+4,"font-size":12,"font-weight":700,fill:"#fff"},s,svg);
+  keys.forEach((k,j)=>{const v=d.sevstatus[s][k],a=.15+.85*v/gm;
+   const r=el("rect",{x:gx+80+j*cw+2,y:gy+i*ch+2,width:cw-4,height:ch-4,rx:5,fill:COL[k],opacity:a},null,svg);
+   el("text",{x:gx+80+j*cw+cw/2,y:gy+i*ch+ch/2+4,"text-anchor":"middle","font-size":12.5,"font-weight":700,fill:"#fff"},v,svg)})});
+ const open=d.funnel[0]-d.funnel[1],rate=d.rate;
+ [["Mitigated",fmt(d.mitigated),COL.Mitigated],["Still open",fmt(open),COL.Open],["Est. impact","$"+(d.fin>=1000?(d.fin/1000).toFixed(2)+"B":d.fin+"M"),"#a66bff"]].forEach((k,i)=>{
+  const x=640+i*100;el("rect",{x,y:410,width:92,height:78,rx:6,fill:"#1d1d3d"},null,svg);
+  el("text",{x:x+46,y:442,"text-anchor":"middle","font-size":16,"font-weight":800,fill:k[2]},k[1],svg);
+  el("text",{x:x+46,y:468,"text-anchor":"middle","font-size":11,fill:"#b9bdd6"},k[0],svg)});
+}
+
+/* ---------- render ---------- */
+function render(){side();const st=$("stage");st.innerHTML="";const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 960 746");svg.setAttribute("width",960);svg.setAttribute("height",746);svg.classList.add("fade");st.appendChild(svg);defs(svg);
+ const d=DATA[Y];({cat:radial,geo:geo,det:det,sta:sta})[T](svg,d)}
+$("years").innerHTML=["2020","2021","2022","2023","2024","2025","2026"].map(y=>`<button data-y="${y}" title="${META.partial[y]||"Full year"}">${y}${META.partial[y]?"*":""}</button>`).join("");
+$("years").onclick=e=>{if(e.target.dataset.y){Y=e.target.dataset.y;render()}};
+$("tabs").onclick=e=>{if(e.target.dataset.t){T=e.target.dataset.t;render()}};
+window.setY=y=>{Y=y;render()};window.setT=t=>{T=t;render()};
+function fit(){const k=Math.min(1,innerWidth/1440);$("app").style.transform=`scale(${k})`;document.body.style.height=(780*k)+"px"}
+addEventListener("resize",fit);fit();render();
+addEventListener("mousemove",e=>{const c=$("cur");c.style.left=e.clientX+"px";c.style.top=e.clientY+"px"});
+</script></body></html>
